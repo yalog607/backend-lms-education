@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllCourses, getLatestCourses, createCourse, getCourseById, getCoursesOfTeacher, updateCourse, deleteCourse} from "../controllers/course.controller.js";
+import { getAllCourses, getLatestCourses, createCourse, getCourseById, getCoursesOfTeacher, updateCourse, deleteCourse, courseSearchAdvanced} from "../controllers/course.controller.js";
 import { authenticateToken, checkIsAdmin, checkIsTeacher } from '../middlewares/authMiddleware.js';
 import { uploadCloud } from "../lib/cloudinary.js";
 const router = express.Router();
@@ -15,5 +15,7 @@ router.post('/create-course', authenticateToken, checkIsTeacher, uploadCloud.sin
 router.put('/update-course/:courseId', authenticateToken, checkIsTeacher, uploadCloud.single('image'), updateCourse)
 
 router.delete('/delete-course/:courseId', authenticateToken, checkIsAdmin, deleteCourse)
+
+router.get('/search-course/:q', courseSearchAdvanced)
 
 export default router;

@@ -20,6 +20,7 @@ export const getLatestCourses = async (req, res) => {
 export const getAllCourses = async (req, res) => {
     try {
         const courses = await Course.find()
+            .populate('teacher_id', 'first_name last_name email')
 
         return res.status(200).json({
             message: "Lấy toàn bộ danh sách khóa học thành công",
@@ -114,9 +115,9 @@ export const updateCourse = async (req, res) => {
         }
 
         if (course.teacher_id.toString() !== userId) {
-            return res.status(403).json({ 
-                success: false, 
-                message: "Bạn không có quyền chỉnh sửa khóa học của người khác" 
+            return res.status(403).json({
+                success: false,
+                message: "Bạn không có quyền chỉnh sửa khóa học của người khác"
             });
         }
 
@@ -140,10 +141,10 @@ export const updateCourse = async (req, res) => {
 
     } catch (error) {
         console.error("Error updateCourse:", error);
-        res.status(500).json({ 
-            success: false, 
-            message: "Lỗi khi cập nhật khóa học", 
-            error: error.message 
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi cập nhật khóa học",
+            error: error.message
         });
     }
 }
@@ -167,33 +168,33 @@ export const deleteCourse = async (req, res) => {
     }
 }
 
-export const courseSearch = async(req, res) => {
+export const courseSearch = async (req, res) => {
     try {
         const { q } = req.body;
         if (!q) {
-            return res.status(200).json({success: true, data: []})
+            return res.status(200).json({ success: true, data: [] })
         };
 
         const courses = await Course.find({
             $or: [
-                { name: {$regex: q, $options: "i"}},
-                { description: {$regex: q, $options: "i"}}
+                { name: { $regex: q, $options: "i" } },
+                { description: { $regex: q, $options: "i" } }
             ]
         })
 
-        return res.status(200).json({success: true, data: courses})
+        return res.status(200).json({ success: true, data: courses })
     } catch (error) {
         console.error("Lỗi tìm kiếm khóa học: ", error);
-        return res.status(500).json({message: "Lỗi tìm kiếm khóa học", error: error.message});
+        return res.status(500).json({ message: "Lỗi tìm kiếm khóa học", error: error.message });
     }
 }
 
-export const courseSearchAdvanced = async(req, res) => {
+export const courseSearchAdvanced = async (req, res) => {
     try {
-        const { q } = req.body;
-        if (!q) 
-            return res.status(200).json({success: true, data: []})
-        
+        const { q } = req.params;
+        if (!q)
+            return res.status(200).json({ success: true, data: [] })
+
         const results = await Course.aggregate([
             {
                 $search: {
@@ -202,10 +203,24 @@ export const courseSearchAdvanced = async(req, res) => {
                         query: q,
                         path: ["name", "description"],
                         fuzzy: {
-                            maxEdits: 2, 
-                            prefixLength: 1 
+                            maxEdits: 2,
+                            prefixLength: 1
                         }
                     }
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "teacher_id",
+                    foreignField: "_id",
+                    as: "teacher_info"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$teacher_info",
+                    preserveNullAndEmptyArrays: true
                 }
             },
             {
@@ -213,9 +228,13 @@ export const courseSearchAdvanced = async(req, res) => {
             },
             {
                 $project: {
-                    title: 1,
+                    name: 1,
+                    description: 1,
                     thumbnail: 1,
                     price: 1,
+                    teacher: {
+                        name: { $concat: ["$teacher_info.first_name", " ", "$teacher_info.last_name"] },
+                    },
                     score: { $meta: "searchScore" }
                 }
             }
@@ -224,6 +243,6 @@ export const courseSearchAdvanced = async(req, res) => {
         res.status(200).json({ success: true, data: results });
     } catch (error) {
         console.error("Lỗi tìm kiếm khóa học: ", error);
-        return res.status(500).json({message: "Lỗi tìm kiếm khóa học", error: error.message});
+        return res.status(500).json({ message: "Lỗi tìm kiếm khóa học", error: error.message });
     }
 }

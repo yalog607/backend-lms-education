@@ -30,7 +30,15 @@ const CourseSchema = new Schema({
     studentCount: {
         type: Number,
         default: 0
-    }
+    },
+    ratingCount: {
+        type: Number,
+        default: 0
+    },
+    benefit: [{
+        type: String,
+        required: true,
+    }]
 }, {
     timestamps: true
 })

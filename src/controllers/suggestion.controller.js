@@ -26,7 +26,7 @@ export const createSuggestion = async (req, res) => {
 export const getSuggestions = async (req, res) => {
     try {
         const suggestions = await Suggestion.find()
-            .populate("user_id", "fName lName email avatar")
+            .populate("user_id", "first_name last_name email avatar")
             .sort({ createdAt: -1 });
 
         res.status(200).json({

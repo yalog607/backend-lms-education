@@ -1,10 +1,11 @@
 import Course from "../models/course.model.js"
+import User from "../models/user.model.js"
 
 export const getLatestCourses = async (req, res) => {
     try {
         const courses = await Course.find()
             .sort({ createdAt: -1 })
-            .limit(5)
+            .limit(10)
             .populate('teacher_id', 'first_name last_name email')
 
         return res.status(200).json({
@@ -244,5 +245,36 @@ export const courseSearchAdvanced = async (req, res) => {
     } catch (error) {
         console.error("Lỗi tìm kiếm khóa học: ", error);
         return res.status(500).json({ message: "Lỗi tìm kiếm khóa học", error: error.message });
+    }
+}
+
+export const getEnrolledCourses = async (req, res) => {
+    try {
+        const userId = req.userId; 
+
+        const user = await User.findById(userId)
+            .populate({
+                path: 'enrolled_courses',
+                populate: {
+                    path: 'teacher_id',
+                }
+            });
+
+        if (!user) {
+            return res.status(404).json({ message: "Không tìm thấy người dùng" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Lấy danh sách khóa học đã mua thành công",
+            courses: user.enrolled_courses
+        });
+
+    } catch (error) {
+        console.error("Lỗi khi lấy khóa học đã mua: ", error);
+        return res.status(500).json({ 
+            message: "Lỗi server", 
+            error: error.message 
+        });
     }
 }

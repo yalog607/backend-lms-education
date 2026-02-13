@@ -4,7 +4,7 @@ import { createEnrollment, getEnrollments, getEnrollmentsOfUser } from "../contr
 const router = express.Router();
 
 router.get('/get-enrollments', authenticateToken, checkIsAdmin, getEnrollments)
-router.get('/get-enrollments-of-user/:userId', authenticateToken, getEnrollmentsOfUser);
+router.get('/get-enrollments-of-user/', authenticateToken, getEnrollmentsOfUser);
 
 router.post('/purchase-course', authenticateToken, createEnrollment);
 

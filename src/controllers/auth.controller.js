@@ -77,7 +77,8 @@ export const register = async (req, res) => {
                 first_name: newUser.first_name,
                 last_name: newUser.last_name,
                 email: newUser.email,
-                role: newUser.role
+                role: newUser.role,
+                avatar: newUser.avatar
             },
             accessToken
         });
@@ -96,20 +97,20 @@ export const login = async (req, res) => {
         // Kiểm tra dữ liệu bắt buộc
         if (!email || !password) {
             return res.status(400).json({
-                message: 'Vui lòng cung cấp email và password'
+                message: 'Please enter email and password!'
             });
         }
 
         // Tìm user theo email
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(401).json({ message: 'Email không tồn tại' });
+            return res.status(401).json({ message: 'Email does not exist!' });
         }
 
         // Kiểm tra password
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Mật khẩu không chính xác' });
+            return res.status(401).json({ message: 'Password is not correct!' });
         }
 
         // Tạo tokens
@@ -145,7 +146,8 @@ export const login = async (req, res) => {
                 first_name: user.first_name,
                 last_name: user.last_name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                avatar: user.avatar
             },
             accessToken,
         });
@@ -311,13 +313,13 @@ export const changePassword = async (req, res) => {
         const userId = req.userId;
         const { password, confirmPassword, newPassword } = req.body;
 
-        if (password !== confirmPassword)
-            return res.status(401).json({ success: false, message: "Mật khẩu nhập lại không chính xác!" });
+        if (newPassword !== confirmPassword)
+            return res.status(401).json({ success: false, message: "Confirm password does not match!" });
         
         const user = await User.findById(userId);
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Mật khẩu cũ không chính xác' });
+            return res.status(401).json({ message: 'Old password is incorrect!' });
         }
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -339,7 +341,10 @@ export const changePassword = async (req, res) => {
 export const getMe = async(req, res) => {
     try {
         const userId = req.userId;
-        const user = await User.findById(userId).select('-password');
+        const user = await User.findById(userId).select('-password').populate({
+            path: 'enrolled_courses',
+            select: 'name'
+        });
         return res.status(200).json({success: true, user: user});
     } catch (error) {
         console.error("Loi isMe: ", error);

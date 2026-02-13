@@ -14,7 +14,7 @@ router.post('/logout', logout);
 router.post('/change-password', authenticateToken, changePassword);
 
 router.put('/update-user', authenticateToken, updateUser);
-router.put('/update-avatar-user', authenticateToken, uploadCloud.single('image'), updateAvatarUser);
+router.post('/update-avatar-user', authenticateToken, uploadCloud.single('image'), updateAvatarUser);
 
 router.get("/me", authenticateToken, getMe);
 

@@ -52,7 +52,7 @@ export const getLesson = async(req, res) => {
 
 export const createLesson = async (req, res) => {
     try {
-        const { title, section_id, type, content, video_url, isFree, videoSource } = req.body;
+        const { title, section_id, type, content, video_url, isFree, videoSource, isPublished } = req.body;
 
         let lessonData = {
             title,
@@ -61,6 +61,7 @@ export const createLesson = async (req, res) => {
             content,
             video_url,
             isFree,
+            isPublished,
             videoSource: videoSource || 'upload',
             orderIndex: await getNewOrderIndex(section_id)
         };

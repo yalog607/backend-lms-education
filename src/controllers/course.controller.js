@@ -1,5 +1,21 @@
 import Course from "../models/course.model.js"
+import Section from "../models/section.model.js"
+import Lesson from "../models/lesson.model.js"
 import User from "../models/user.model.js"
+
+const formatDuration = (totalMinutes) => {
+    if (!totalMinutes) return "0 minute";
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    let mStr = minutes > 0 ? "minutes" : "minute";
+    let hStr = hours > 0 ? "hours" : "hour";
+
+    if (hours > 0) {
+        return `${hours} ${mStr} ${minutes} ${hStr}`;
+    }
+    return `${minutes} ${mStr}`;
+};
 
 export const getLatestCourses = async (req, res) => {
     try {
@@ -71,13 +87,45 @@ export const createCourse = async (req, res) => {
 
 export const getCourseById = async (req, res) => {
     try {
-        const { courseId } = req.params;
-        const course = await Course.findOne({ courseId });
+        const { id } = req.params;
+        const course = await Course.findById(id).lean();
+        if (!course) {
+            return res.status(404).json({ message: "This course doesn't exist!" });
+        }
+
+        const sections = await Section.find({ course_id: id, isPublished: true }).sort({ orderIndex: 1 }).lean();
+        const sectionIds = sections.map(section => section._id);
+
+        const lessons = await Lesson.find({ section_id: { $in: sectionIds }, isPublished: true })
+            .sort({ order: 1 })
+            .lean();
+
+        const sectionsWithLessons = sections.map(section => {
+            const sectionLessons = lessons.filter(lesson =>
+                lesson.section_id.toString() === section._id.toString()
+            );
+
+            return {
+                ...section,
+                lessons: sectionLessons
+            };
+        });
+
+        const totalCourseMinutes = sectionsWithLessons.reduce((total, section) => {
+            const sectionDuration = section.lessons.reduce((secTotal, lesson) => {
+                return secTotal + (lesson.duration || 0);
+            }, 0);
+            return total + sectionDuration;
+        }, 0);
 
         return res.status(200).json({
             success: true,
-            message: "Lấy khóa học thành công",
-            course
+            course: {
+                ...course,
+                lessons_length: lessons.length,
+                totalDuration: formatDuration(totalCourseMinutes),
+                sections: sectionsWithLessons
+            }
         })
     } catch (error) {
         console.error("Lỗi trong quá trình lấy khóa học: ", error);
@@ -251,7 +299,7 @@ export const courseSearchAdvanced = async (req, res) => {
 
 export const getEnrolledCourses = async (req, res) => {
     try {
-        const userId = req.userId; 
+        const userId = req.userId;
 
         const user = await User.findById(userId)
             .populate({
@@ -273,9 +321,9 @@ export const getEnrolledCourses = async (req, res) => {
 
     } catch (error) {
         console.error("Lỗi khi lấy khóa học đã mua: ", error);
-        return res.status(500).json({ 
-            message: "Lỗi server", 
-            error: error.message 
+        return res.status(500).json({
+            message: "Lỗi server",
+            error: error.message
         });
     }
 }

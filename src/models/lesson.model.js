@@ -10,6 +10,14 @@ const LessonSchema = new mongoose.Schema({
         enum: ['video', 'article', 'quiz'], 
         default: 'video'
     },
+    orderIndex: {
+        type: Number,
+        required: true,
+    },
+    isPublished: {
+        type: Boolean,
+        default: false
+    },
     section_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Section'

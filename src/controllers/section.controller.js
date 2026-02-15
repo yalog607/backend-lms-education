@@ -1,6 +1,11 @@
 import Section from "../models/section.model.js";
 import Lesson from "../models/lesson.model.js";
 
+const getNewOrderIndex = async (course_id) => {
+    const lastSection = await Section.findOne({course_id}).sort({ orderIndex: -1 });
+    return lastSection ? lastSection.orderIndex + 1 : 1;
+};
+
 export const getSectionsOfCourse = async (req, res) => {
     try {
         const { course_id } = req.params;
@@ -34,12 +39,13 @@ export const getSectionById = async(req, res) => {
 
 export const createSection = async (req, res) => {
     try {
-        const { title, course_id, orderIndex } = req.body;
+        const { title, course_id, isPublished } = req.body;
 
         const newSection = await Section.create({
             title,
             course_id,
-            orderIndex
+            isPublished,
+            orderIndex: await getNewOrderIndex(course_id)
         });
 
         return res.status(201).json({

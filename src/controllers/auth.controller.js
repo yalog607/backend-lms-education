@@ -69,17 +69,12 @@ export const register = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
+        const {pwd, ...userData} = newUser.toObject();
+
         return res.status(201).json({
             success: true,
             message: 'Đăng ký thành công',
-            user: {
-                user_id: newUser._id,
-                first_name: newUser.first_name,
-                last_name: newUser.last_name,
-                email: newUser.email,
-                role: newUser.role,
-                avatar: newUser.avatar
-            },
+            user: userData,
             accessToken
         });
 
@@ -138,17 +133,12 @@ export const login = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
+        const {pwd, ...userData} = user.toObject();
+
         return res.status(200).json({
             success: true,
             message: 'Đăng nhập thành công',
-            user: {
-                user_id: user._id,
-                first_name: user.first_name,
-                last_name: user.last_name,
-                email: user.email,
-                role: user.role,
-                avatar: user.avatar
-            },
+            user: userData,
             accessToken,
         });
 

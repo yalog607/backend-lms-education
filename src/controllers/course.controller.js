@@ -75,12 +75,13 @@ export const getCourseById = async (req, res) => {
         const course = await Course.findOne({ courseId });
 
         return res.status(200).json({
+            success: true,
             message: "Lấy khóa học thành công",
             course
         })
     } catch (error) {
         console.error("Lỗi trong quá trình lấy khóa học: ", error);
-        return res.status(500).json({ message: "Lỗi server", error })
+        return res.status(500).json({ success: false, message: "Lỗi server", error })
     }
 }
 

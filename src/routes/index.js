@@ -12,6 +12,7 @@ import ratingRoute from "./rating.route.js"
 import progressRoute from "./progress.route.js"
 import suggestionRoute from "./suggestion.route.js"
 import webhookRoute from "./webhook.route.js"
+import muxRoute from "./mux.route.js";
 
 const route = (app) => {
     app.use('/api/auth', userRoute)
@@ -31,6 +32,7 @@ const route = (app) => {
     app.use('/api/suggestion', suggestionRoute)
 
     app.use('/api/webhook', webhookRoute)
+    app.use('/api/mux', muxRoute);
 }
 
 export default route

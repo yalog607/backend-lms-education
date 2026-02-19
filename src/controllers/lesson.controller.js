@@ -70,7 +70,7 @@ export const createLesson = async (req, res) => {
             try {
                 const asset = await video.assets.create({
                     input: video_url,
-                    playback_policy: 'signed',
+                    playback_policy: ['signed'],
                     mp4_support: 'none',
                     test: false
                 });

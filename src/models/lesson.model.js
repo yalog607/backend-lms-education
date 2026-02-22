@@ -38,6 +38,7 @@ const LessonSchema = new mongoose.Schema({
     },
     muxAssetId: { type: String }, // Quản lý video
     muxPlaybackId: { type: String }, // Phát video
+    muxUploadId: { type: String },
     duration: { type: Number, default: 0 },
     videoSource: {
         type: String,

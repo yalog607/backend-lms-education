@@ -1,5 +1,14 @@
 import Lesson from "../models/lesson.model.js";
-import { video } from "../lib/mux.js";
+import axios from "axios";
+const apiKey = process.env.YTB_API_KEY;
+
+const parseYouTubeDuration = (duration) => {
+    const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+    const hours = (parseInt(match[1]) || 0);
+    const minutes = (parseInt(match[2]) || 0);
+    const seconds = (parseInt(match[3]) || 0);
+    return hours * 3600 + minutes * 60 + seconds;
+};
 
 const getNewOrderIndex = async (section_id) => {
     const lastLesson = await Lesson.findOne({ section_id }).sort({ orderIndex: -1 });
@@ -52,7 +61,7 @@ export const getLesson = async(req, res) => {
 
 export const createLesson = async (req, res) => {
     try {
-        const { title, section_id, type, content, video_url, isFree, videoSource, isPublished } = req.body;
+        const { title, section_id, type, duration, content, video_url, uploadId, isFree, videoSource, isPublished } = req.body;
 
         let lessonData = {
             title,
@@ -63,26 +72,12 @@ export const createLesson = async (req, res) => {
             isFree,
             isPublished,
             videoSource: videoSource || 'upload',
-            orderIndex: await getNewOrderIndex(section_id)
+            orderIndex: await getNewOrderIndex(section_id),
+            duration: duration || 0
         };
 
-        if (type === 'video' && lessonData.videoSource === 'upload' && video_url) {
-            try {
-                const asset = await video.assets.create({
-                    input: video_url,
-                    playback_policy: ['signed'],
-                    mp4_support: 'none',
-                    test: false
-                });
-
-                lessonData.muxAssetId = asset.id;
-                lessonData.muxPlaybackId = asset.playback_ids?.[0]?.id;
-                lessonData.duration = asset.duration || 0;
-
-            } catch (muxError) {
-                console.error("Lỗi Mux:", muxError);
-                return res.status(500).json({ message: "Lỗi xử lý video với Mux" });
-            }
+        if (type === 'video' && lessonData.videoSource === 'upload' && uploadId) {
+            lessonData.muxUploadId = uploadId; 
         }
         else if (type === 'video' && lessonData.videoSource === 'youtube' && video_url) {
             const youtubeId = extractYouTubeID(video_url);
@@ -92,6 +87,19 @@ export const createLesson = async (req, res) => {
             }
 
             lessonData.youtubeId = youtubeId;
+            lessonData.video_url = video_url;
+
+            try {
+                if (apiKey) {
+                    const ytRes = await axios.get(`https://www.googleapis.com/youtube/v3/videos?id=${youtubeId}&part=contentDetails&key=${apiKey}`);
+                    if (ytRes.data.items && ytRes.data.items.length > 0) {
+                        const ytDuration = ytRes.data.items[0].contentDetails.duration;
+                        lessonData.duration = parseYouTubeDuration(ytDuration);
+                    }
+                }
+            } catch (ytError) {
+                console.error("Lỗi lấy thời lượng YouTube:", ytError.message);
+            }
         }
 
         const newLesson = await Lesson.create(lessonData);

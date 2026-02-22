@@ -33,6 +33,25 @@ export const updateProgress = async (req, res) => {
     }
 };
 
+export const getCourseProgress = async (req, res) => {
+    try {
+        const { lessonIds } = req.body; 
+        const user_id = req.userId;
+
+        const progressList = await Progress.find({ 
+            user_id, 
+            lesson_id: { $in: lessonIds } 
+        });
+
+        res.status(200).json({
+            success: true,
+            data: progressList
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 export const getProgress = async (req, res) => {
     try {
         const { lesson_id } = req.params;

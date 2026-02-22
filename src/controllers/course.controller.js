@@ -2,19 +2,20 @@ import Course from "../models/course.model.js"
 import Section from "../models/section.model.js"
 import Lesson from "../models/lesson.model.js"
 import User from "../models/user.model.js"
+import Enrollment from "../models/enrollment.model.js";
 
-const formatDuration = (totalMinutes) => {
-    if (!totalMinutes) return "0 minute";
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
+const formatDuration = (totalSeconds) => {
+    if (!totalSeconds) return "0 second";
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
 
     let mStr = minutes > 0 ? "minutes" : "minute";
-    let hStr = hours > 0 ? "hours" : "hour";
+    let sStr = seconds > 0 ? "seconds" : "second";
 
-    if (hours > 0) {
-        return `${hours} ${mStr} ${minutes} ${hStr}`;
+    if (minutes > 0) {
+        return `${minutes} ${mStr} ${seconds} ${sStr}`;
     }
-    return `${minutes} ${mStr}`;
+    return `${seconds} ${sStr}`;
 };
 
 export const getLatestCourses = async (req, res) => {
@@ -46,6 +47,34 @@ export const getAllCourses = async (req, res) => {
     } catch (error) {
         console.error("Lỗi database Courses: ", error)
         return res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+}
+
+export const checkOwnCourse = async (req, res) => {
+    try {
+        const { course_id } = req.params;
+        const user_id = req.userId;
+        const enrollment = await Enrollment.findOne({ user_id, course_id });
+        if (enrollment) {
+            return res.status(200).json({
+                success: true,
+                message: "You are enrolled in this course",
+                isEnrolled: true
+            });
+        } else {
+            return res.status(200).json({
+                success: true,
+                message: "You are not enrolled in this course",
+                isEnrolled: false
+            });
+        }
+    } catch (err) {
+        console.error("Error checking enrollment:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Error while checking enrollment",
+            error: err.message
+        });
     }
 }
 

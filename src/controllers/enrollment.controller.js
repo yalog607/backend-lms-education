@@ -9,18 +9,18 @@ export const createEnrollment = async (req, res) => {
 
         const course = await Course.findById(course_id);
         if (!course) {
-            return res.status(404).json({ success: false, message: "Khóa học không tồn tại" });
+            return res.status(404).json({ success: false, message: "Course does not exist" });
         }
 
         const user = await User.findById(user_id);
         if (!user) {
-            return res.status(404).json({ success: false, message: "Người dùng không tồn tại" });
+            return res.status(404).json({ success: false, message: "User does not exist" });
         }
 
         if (user.balance < course.price) {
             return res.status(400).json({
                 success: false,
-                message: "Số dư không đủ để đăng ký khóa học này. Vui lòng nạp thêm tiền."
+                message: "Your balance is insufficient to enroll in this course. Please top up your account."
             });
         }
 
@@ -28,7 +28,7 @@ export const createEnrollment = async (req, res) => {
         if (existingEnrollment) {
             return res.status(400).json({
                 success: false,
-                message: "Bạn đã đăng ký khóa học này rồi!"
+                message: "You are already enrolled in this course."
             });
         }
 
@@ -50,7 +50,7 @@ export const createEnrollment = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            message: "Đăng ký khóa học thành công!",
+            message: "Enrollment successful! The course fee has been deducted from your account.",
             data: newEnrollment
         });
 
@@ -58,60 +58,60 @@ export const createEnrollment = async (req, res) => {
         console.error("Enrollment Error:", error);
         res.status(500).json({
             success: false,
-            message: "Lỗi khi thực hiện đăng ký",
+            message: "Error while enrolling",
             error: error.message
         });
     }
 }
 
-export const getEnrollments = async (req, res) => {
-    try {
-        const enrollments = await Enrollment.find({})
-            .populate({
-                path: 'course_id',
-                select: 'title thumbnail description teacher_id'
-            })
-            .sort({ enrollmentDate: -1 });
+    export const getEnrollments = async (req, res) => {
+        try {
+            const enrollments = await Enrollment.find({})
+                .populate({
+                    path: 'course_id',
+                    select: 'title thumbnail description teacher_id'
+                })
+                .sort({ enrollmentDate: -1 });
 
-        return res.status(200).json({
-            success: true,
-            count: enrollments.length,
-            data: enrollments
-        });
-    } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            message: "Không thể lấy danh sách đăng ký", 
-            error: error.message 
-        });
+            return res.status(200).json({
+                success: true,
+                count: enrollments.length,
+                data: enrollments
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: "Không thể lấy danh sách đăng ký",
+                error: error.message
+            });
+        }
     }
-}
 
-export const getEnrollmentsOfUser = async(req, res) => {
-    try {
-        const userId = req.userId;
+    export const getEnrollmentsOfUser = async (req, res) => {
+        try {
+            const userId = req.userId;
 
-        const enrollments = await Enrollment.find({ user_id: userId })
-            .populate({
-                path: 'course_id',
-                select: '_id name teacher_id',
-                populate: {
-                    path: 'teacher_id',
-                    select: 'first_name last_name email'
-                }
-            })
-            .sort({ enrollmentDate: -1 });
+            const enrollments = await Enrollment.find({ user_id: userId })
+                .populate({
+                    path: 'course_id',
+                    select: '_id name teacher_id',
+                    populate: {
+                        path: 'teacher_id',
+                        select: 'first_name last_name email'
+                    }
+                })
+                .sort({ enrollmentDate: -1 });
 
-        return res.status(200).json({
-            success: true,
-            count: enrollments.length,
-            enrollments
-        });
-    } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            message: "Không thể lấy danh sách đăng ký", 
-            error: error.message 
-        });
+            return res.status(200).json({
+                success: true,
+                count: enrollments.length,
+                enrollments
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: "Không thể lấy danh sách đăng ký",
+                error: error.message
+            });
+        }
     }
-}

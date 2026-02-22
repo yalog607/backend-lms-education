@@ -21,12 +21,17 @@ export const handleMuxWebhook = async (req, res) => {
             const assetId = data.id;
             const duration = data.duration;
 
+            const playbackId = data.playback_ids?.[0]?.id;
+            const uploadId = data.upload_id;
+
             console.log(`⚡ Mux báo: Video ${assetId} đã xong. Duration: ${duration}`);
 
             const updatedLesson = await Lesson.findOneAndUpdate(
-                { muxAssetId: assetId },
+                { $or: [{ muxUploadId: uploadId }, { muxAssetId: assetId }] },
                 {
                     duration: duration,
+                    muxAssetId: assetId,
+                    muxPlaybackId: playbackId,
                 },
                 { new: true }
             );

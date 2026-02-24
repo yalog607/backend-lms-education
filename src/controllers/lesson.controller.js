@@ -46,16 +46,16 @@ export const getLessons = async (req, res) => {
     }
 }
 
-export const getLesson = async(req, res) => {
+export const getLesson = async (req, res) => {
     try {
         const { lessonId } = req.params;
 
         const lesson = await Lesson.findById(lessonId);
 
-        return res.status(200).json({success: true, data: lesson});
+        return res.status(200).json({ success: true, data: lesson });
     } catch (error) {
         console.error("Loi lay bai hoc:", error);
-        return res.status(500).json({success: false, message: "Loi lay bai hoc"})
+        return res.status(500).json({ success: false, message: "Loi lay bai hoc" })
     }
 }
 
@@ -77,11 +77,11 @@ export const createLesson = async (req, res) => {
         };
 
         if (type === 'video' && lessonData.videoSource === 'upload' && uploadId) {
-            lessonData.muxUploadId = uploadId; 
+            lessonData.muxUploadId = uploadId;
         }
         else if (type === 'video' && lessonData.videoSource === 'youtube' && video_url) {
             const youtubeId = extractYouTubeID(video_url);
-            
+
             if (!youtubeId) {
                 return res.status(400).json({ message: "Link YouTube không hợp lệ" });
             }
@@ -154,12 +154,34 @@ export const deleteLesson = async (req, res) => {
 export const updateLesson = async (req, res) => {
     try {
         const { lessonId } = req.params;
+
+        if (req.body.type === 'video' && req.body.videoSource === 'youtube' && req.body.video_url) {
+            const youtubeId = extractYouTubeID(req.body.video_url);
+
+            if (!youtubeId) {
+                return res.status(400).json({ message: "Youtube link is invalid" });
+            }
+
+            req.body.youtubeId = youtubeId;
+
+            try {
+                if (apiKey) {
+                    const ytRes = await axios.get(`https://www.googleapis.com/youtube/v3/videos?id=${youtubeId}&part=contentDetails&key=${apiKey}`);
+                    if (ytRes.data.items && ytRes.data.items.length > 0) {
+                        const ytDuration = ytRes.data.items[0].contentDetails.duration;
+                        req.body.duration = parseYouTubeDuration(ytDuration);
+                    }
+                }
+            } catch (ytError) {
+                console.error("Lỗi lấy thời lượng YouTube:", ytError.message);
+            }
+        }
+
         const updatedLesson = await Lesson.findByIdAndUpdate(
             lessonId,
             { $set: req.body },
             { new: true, runValidators: true }
         );
-
         if (!updatedLesson) return res.status(404).json({ message: "Không tìm thấy bài học" });
 
         res.status(200).json({ success: true, data: updatedLesson });

@@ -14,6 +14,7 @@ export const authenticateToken = (req, res, next) => {
         return res.status(403).json({ message: 'Token không hợp lệ hoặc hết hạn' });
     }
 
+    req.role = decoded.role;
     req.userId = decoded.userId;
     next();
 };

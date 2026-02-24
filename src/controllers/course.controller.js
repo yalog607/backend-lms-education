@@ -7,7 +7,7 @@ import Enrollment from "../models/enrollment.model.js";
 const formatDuration = (totalSeconds) => {
     if (!totalSeconds) return "0 second";
     const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
+    const seconds = Math.floor(totalSeconds % 60);
 
     let mStr = minutes > 0 ? "minutes" : "minute";
     let sStr = seconds > 0 ? "seconds" : "second";
@@ -54,6 +54,9 @@ export const checkOwnCourse = async (req, res) => {
     try {
         const { course_id } = req.params;
         const user_id = req.userId;
+        if (!user_id || !course_id) {
+            return res.status(400).json({ success: false, message: "Thiếu thông tin cần thiết" });
+        }
         const enrollment = await Enrollment.findOne({ user_id, course_id });
         if (enrollment) {
             return res.status(200).json({
@@ -192,11 +195,10 @@ export const updateCourse = async (req, res) => {
         if (!course) {
             return res.status(404).json({ message: "Không tìm thấy khóa học trong hệ thống" });
         }
-
-        if (course.teacher_id.toString() !== userId) {
+        if (course.teacher_id && course.teacher_id !== userId && req.role !== 'admin') {
             return res.status(403).json({
                 success: false,
-                message: "Bạn không có quyền chỉnh sửa khóa học của người khác"
+                message: "You are not the teacher of this course. You don't have permission to update it."
             });
         }
 

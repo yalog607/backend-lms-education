@@ -22,7 +22,7 @@ export const getLatestCourses = async (req, res) => {
     try {
         const courses = await Course.find()
             .sort({ createdAt: -1 })
-            .limit(10)
+            .limit(5)
             .populate('teacher_id', 'first_name last_name email')
 
         return res.status(200).json({

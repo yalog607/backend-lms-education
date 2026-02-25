@@ -120,7 +120,7 @@ export const createCourse = async (req, res) => {
 export const getCourseById = async (req, res) => {
     try {
         const { id } = req.params;
-        const course = await Course.findById(id).lean();
+        const course = await Course.findById(id).populate('teacher_id', 'first_name last_name email').lean();
         if (!course) {
             return res.status(404).json({ message: "This course doesn't exist!" });
         }

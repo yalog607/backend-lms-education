@@ -81,6 +81,25 @@ export const checkOwnCourse = async (req, res) => {
     }
 }
 
+export const getEnrolledCourseIds = async(req, res) => {
+    try {
+        const userId = req.userId;
+        const enrollments = await Enrollment.find({ user_id: userId }).select('course_id');
+        const enrolledCourseIds = enrollments.map(enrollment => enrollment.course_id);
+        return res.status(200).json({
+            success: true,
+            message: "Get enrolled course ids successfully!",
+            courseIds: enrolledCourseIds
+        });
+    } catch (error) {
+        console.log("Error when getting enrolled course ids: ", error);
+        return res.status(500).json({
+            success: false,
+            message: "Error while getting enrolled course ids"
+        })
+    }
+}
+
 export const createCourse = async (req, res) => {
     try {
         const { name, description, price, thumbnail, teacher_id, level } = req.body;

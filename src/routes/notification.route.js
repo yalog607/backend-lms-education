@@ -4,9 +4,10 @@ import { createNotification, deleteNotification, getNotificationOfUser, readNoti
 const router = express.Router();
 
 router.post('/create-notification', authenticateToken, checkIsTeacher, createNotification)
+router.post('/read-notification/:id', authenticateToken, readNotification);
 router.post('/read-notification', authenticateToken, readNotification);
 
-router.delete('/delete-notification/:notificationId', authenticateToken, checkIsTeacher, deleteNotification)
+router.delete('/delete-notification/:notificationId', authenticateToken, deleteNotification)
 
 router.get('/get-notification', authenticateToken, getNotificationOfUser);
 

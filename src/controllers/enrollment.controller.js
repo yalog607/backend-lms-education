@@ -7,6 +7,10 @@ export const createEnrollment = async (req, res) => {
         const { course_id } = req.body;
         const user_id = req.userId;
 
+        if (!course_id) {
+            return res.status(400).json({ success: false, message: 'course_id is required' });
+        }
+
         const course = await Course.findById(course_id);
         if (!course) {
             return res.status(404).json({ success: false, message: "Course does not exist" });
@@ -15,6 +19,19 @@ export const createEnrollment = async (req, res) => {
         const user = await User.findById(user_id);
         if (!user) {
             return res.status(404).json({ success: false, message: "User does not exist" });
+        }
+
+        const isOwnerInstructor = course.teacher_id?.toString() === user_id;
+        const isAdmin = user.role === 'admin';
+
+        if (isOwnerInstructor || isAdmin) {
+            return res.status(200).json({
+                success: true,
+                message: isOwnerInstructor
+                    ? 'You are the owner of this course. No purchase is required.'
+                    : 'Admin account can access all courses without purchase.',
+                data: null,
+            });
         }
 
         if (user.balance < course.price) {

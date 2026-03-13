@@ -40,7 +40,7 @@ export const getUploadUrl = async (req, res) => {
         return res.status(200).json({ 
             success: true, 
             uploadUrl: upload.url, 
-            uploadId: upload.id 
+            uploadId: upload.id
         });
     } catch (error) {
         console.error("Lỗi tạo Mux Upload URL:", error);

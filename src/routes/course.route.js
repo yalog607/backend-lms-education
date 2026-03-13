@@ -10,7 +10,6 @@ router.get("/get-course/:id", getCourseById)
 router.get("/get-user-courses", authenticateToken, getEnrolledCourses)
 router.get('/check-own-course/:course_id', authenticateToken, checkOwnCourse);
 router.get('/get-enrolled-course-ids', authenticateToken, getEnrolledCourseIds)
-
 router.get('/get-courses-of-teacher/:teacher_id', authenticateToken, checkIsTeacher, getCoursesOfTeacher)
 
 router.post('/create-course', authenticateToken, checkIsTeacher, uploadCloud.single('image'), createCourse);

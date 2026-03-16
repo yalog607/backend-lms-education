@@ -40,14 +40,20 @@ export const getSectionById = async(req, res) => {
 export const createSection = async (req, res) => {
     try {
         const { title, course_id, isPublished } = req.body;
-
+        const Course = (await import('../models/course.model.js')).default;
+        const course = await Course.findById(course_id);
+        if (!course) {
+            return res.status(404).json({ success: false, message: 'Không tìm thấy khóa học' });
+        }
+        if (req.role !== 'admin' && (!course.teacher_id || course.teacher_id.toString() !== req.userId)) {
+            return res.status(403).json({ success: false, message: 'Bạn không có quyền thao tác với section của khóa học này' });
+        }
         const newSection = await Section.create({
             title,
             course_id,
             isPublished,
             orderIndex: await getNewOrderIndex(course_id)
         });
-
         return res.status(201).json({
             success: true,
             data: newSection
@@ -63,20 +69,23 @@ export const createSection = async (req, res) => {
 export const updateSection = async (req, res) => {
     try {
         const { id } = req.params;
-
+        const section = await Section.findById(id);
+        if (!section) {
+            return res.status(404).json({ success: false, message: 'Không tìm thấy chương học' });
+        }
+        const Course = (await import('../models/course.model.js')).default;
+        const course = await Course.findById(section.course_id);
+        if (!course) {
+            return res.status(404).json({ success: false, message: 'Không tìm thấy khóa học' });
+        }
+        if (req.role !== 'admin' && (!course.teacher_id || course.teacher_id.toString() !== req.userId)) {
+            return res.status(403).json({ success: false, message: 'Bạn không có quyền thao tác với section của khóa học này' });
+        }
         const updatedSection = await Section.findByIdAndUpdate(
             id,
             { $set: req.body },
             { new: true, runValidators: true }
         );
-
-        if (!updatedSection) {
-            return res.status(404).json({
-                success: false,
-                message: "Không tìm thấy chương học"
-            });
-        }
-
         return res.status(200).json({
             success: true,
             data: updatedSection
@@ -92,19 +101,21 @@ export const updateSection = async (req, res) => {
 export const deleteSection = async (req, res) => {
     try {
         const { id } = req.params;
-
-        const deletedSection = await Section.findByIdAndDelete(id);
-
-        if (!deletedSection) {
-            return res.status(404).json({
-                success: false,
-                message: "Chương học không tồn tại"
-            });
+        const section = await Section.findById(id);
+        if (!section) {
+            return res.status(404).json({ success: false, message: 'Chương học không tồn tại' });
         }
-
+        const Course = (await import('../models/course.model.js')).default;
+        const course = await Course.findById(section.course_id);
+        if (!course) {
+            return res.status(404).json({ success: false, message: 'Không tìm thấy khóa học' });
+        }
+        if (req.role !== 'admin' && (!course.teacher_id || course.teacher_id.toString() !== req.userId)) {
+            return res.status(403).json({ success: false, message: 'Bạn không có quyền thao tác với section của khóa học này' });
+        }
+        const deletedSection = await Section.findByIdAndDelete(id);
         // Xóa tất cả bài học thuộc chương này để tránh dữ liệu mồ côi
         await Lesson.deleteMany({ section_id: id });
-
         return res.status(200).json({
             success: true,
             message: "Xóa chương học và các bài học liên quan thành công"

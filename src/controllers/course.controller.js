@@ -125,29 +125,26 @@ export const getEnrolledCourseIds = async(req, res) => {
 
 export const createCourse = async (req, res) => {
     try {
+        if (req.role !== 'admin') {
+            return res.status(403).json({ message: 'Chỉ admin mới có quyền tạo khóa học.' });
+        }
         const { name, description, price, thumbnail, teacher_id, level } = req.body;
-
         const imageUrl = req.file?.path;
-
         if (!name || !description || !price) {
             return res.status(400).json({
                 message: 'Thiếu các trường quan trọng: name, description, price'
             })
         }
-
-        const ownerTeacherId = req.role === 'admin' ? (teacher_id || req.userId) : req.userId;
-
         const newCourse = new Course({
             name,
             description,
             price,
             thumbnail,
-            teacher_id: ownerTeacherId || null,
+            teacher_id: teacher_id || null,
             level: level || 'beginner',
             thumbnail: imageUrl || ''
         })
         await newCourse.save();
-
         return res.status(201).json({
             message: "Tạo khóa học thành công",
             course: newCourse

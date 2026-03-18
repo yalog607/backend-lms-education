@@ -63,6 +63,25 @@ export const createLesson = async (req, res) => {
     try {
         const { title, section_id, type, duration, content, video_url, uploadId, isFree, videoSource, isPublished } = req.body;
 
+        // Validate các trường bắt buộc
+        if (!title || !section_id || !type) {
+            return res.status(400).json({ message: "Thiếu thông tin bắt buộc (title, section_id, type)" });
+        }
+
+        // Validate uploadId nếu là video upload
+        if (type === 'video' && (videoSource === 'upload' || !videoSource)) {
+            if (!uploadId) {
+                return res.status(400).json({ message: "Thiếu uploadId cho video upload" });
+            }
+        }
+
+        // Ép kiểu duration về số
+        let parsedDuration = 0;
+        if (duration !== undefined && duration !== null) {
+            parsedDuration = Number(duration);
+            if (isNaN(parsedDuration)) parsedDuration = 0;
+        }
+
         let lessonData = {
             title,
             section_id,
@@ -73,7 +92,7 @@ export const createLesson = async (req, res) => {
             isPublished,
             videoSource: videoSource || 'upload',
             orderIndex: await getNewOrderIndex(section_id),
-            duration: duration || 0
+            duration: parsedDuration
         };
 
         if (type === 'video' && lessonData.videoSource === 'upload' && uploadId) {
@@ -126,7 +145,7 @@ export const deleteLesson = async (req, res) => {
 
         const sectionId = lessonToDelete.section_id;
 
-        await Lesson.findByIdAndDelete(id);
+        await Lesson.findByIdAndDelete(lessonId);
 
         const remainingLessons = await Lesson.find({ section_id: sectionId }).sort({ orderIndex: 1 });
 
@@ -145,8 +164,8 @@ export const deleteLesson = async (req, res) => {
             success: true,
             message: "Đã xóa và cập nhật lại thứ tự các bài học thành công"
         });
-        res.status(200).json({ success: true, message: "Đã xóa bài học thành công" });
     } catch (error) {
+        console.log("Lỗi xóa bài học: ", error);
         res.status(500).json({ message: "Lỗi xóa bài học", error: error.message });
     }
 }

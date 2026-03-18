@@ -37,6 +37,8 @@ export const getUploadUrl = async (req, res) => {
             cors_origin: '*',
         });
 
+        console.log("Upload object details: ", upload);
+
         return res.status(200).json({ 
             success: true, 
             uploadUrl: upload.url, 

@@ -40,9 +40,20 @@ export const getAllCourses = async (req, res) => {
         const courses = await Course.find()
             .populate('teacher_id', 'first_name last_name email')
 
+        const courseWithFullInfo = await Promise.all(courses.map(async (course) => {
+            const sections = await Section.find({ course_id: course._id });
+            const sectionIds = sections.map(section => section._id);
+            const lessons = await Lesson.find({ section_id: { $in: sectionIds } });
+            return {
+                ...course.toObject(),
+                sections,
+                lessons_length: lessons.length,
+            }
+        }))
+
         return res.status(200).json({
             message: "Lấy toàn bộ danh sách khóa học thành công",
-            courses
+            courses: courseWithFullInfo,
         })
     } catch (error) {
         console.error("Lỗi database Courses: ", error)
@@ -125,8 +136,9 @@ export const getEnrolledCourseIds = async(req, res) => {
 
 export const createCourse = async (req, res) => {
     try {
-        if (req.role !== 'admin') {
-            return res.status(403).json({ message: 'Chỉ admin mới có quyền tạo khóa học.' });
+        const admin = await User.findById(req.userId);
+        if (admin.role !== 'admin') {
+            return res.status(403).json({ message: 'Only admins can create courses.' });
         }
         const { name, description, price, thumbnail, teacher_id, level } = req.body;
         const imageUrl = req.file?.path;
@@ -236,7 +248,10 @@ export const updateCourse = async (req, res) => {
         if (!course) {
             return res.status(404).json({ message: "Không tìm thấy khóa học trong hệ thống" });
         }
-        if (course.teacher_id && course.teacher_id.toString() !== userId && req.role !== 'admin') {
+
+        const owner = await User.findById(userId);
+
+        if (course.teacher_id && course.teacher_id.toString() !== userId && owner.role !== 'admin') {
             return res.status(403).json({
                 success: false,
                 message: "You are not the teacher of this course. You don't have permission to update it."
@@ -282,7 +297,9 @@ export const deleteCourse = async (req, res) => {
             return res.status(404).json({ message: "Khóa học không tồn tại" });
         }
 
-        if (req.role !== 'admin' && course.teacher_id?.toString() !== userId) {
+        const owner = await User.findById(userId);
+
+        if (owner.role !== 'admin' && course.teacher_id?.toString() !== userId) {
             return res.status(403).json({
                 success: false,
                 message: "You are not allowed to delete this course",

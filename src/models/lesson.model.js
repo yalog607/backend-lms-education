@@ -33,7 +33,7 @@ const LessonSchema = new mongoose.Schema({
     video_url: {
         type: String,
         required: function() {
-            return this.type === 'video';
+            return this.type === 'video' && this.videoSource === 'youtube';
         }
     },
     muxAssetId: { type: String }, // Quản lý video

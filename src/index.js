@@ -5,23 +5,20 @@ import cors from "cors"
 import route from './routes/index.js'
 import cookieParser from 'cookie-parser';
 import rateLimiter from './middlewares/rateLimiter.js'
+import webhookRoute from './routes/webhook.route.js';
 
 const app = express()
 const port = process.env.PORT || 5001
 
-// app.use(
-//     "/api/webhook", 
-//     express.raw({ type: "application/json" }),
-//     (req, _res, next) => {
-//         req.rawBody = req.body
-//         next();
-//     }
-// );
-app.use(express.json({
-  verify: (req, res, buf) => {
-    req.rawBody = buf;
-  }
-}));
+app.use(
+  '/api/webhook/mux',
+  express.raw({ type: 'application/json' }),
+  (req, res, next) => {
+    req.rawBody = req.body;
+    next();
+  },
+  webhookRoute
+);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.json())

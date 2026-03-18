@@ -25,3 +25,4 @@ dist-ssr
 
 .env
 mux-access-token-e-learning.env
+mux-signing-key.pem

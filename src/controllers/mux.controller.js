@@ -2,8 +2,10 @@ import Mux from "@mux/mux-node";
 import 'dotenv/config';
 import { video } from "../lib/mux.js";
 
-const keyId = process.env.MUX_SIGNING_KEY_ID;
-const keySecret = Buffer.from(process.env.MUX_PRIVATE_KEY_BASE64, 'base64'); 
+const mux = new Mux({
+  jwtSigningKey: process.env.MUX_SIGNING_KEY_ID,
+  jwtPrivateKey: Buffer.from(process.env.MUX_PRIVATE_KEY_BASE64, 'base64').toString('utf8'),
+});
 
 export const signMuxToken = async (req, res) => {
     try {
@@ -13,9 +15,7 @@ export const signMuxToken = async (req, res) => {
             return res.status(400).json({ message: "Thiếu Playback ID" });
         }
 
-        const token = Mux.JWT.signPlaybackId(playbackId, {
-            keyId: keyId,
-            keySecret: keySecret,
+        const token = await mux.jwt.signPlaybackId(playbackId, {
             type: 'video',
             expiration: '6h',
         });

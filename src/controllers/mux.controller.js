@@ -10,7 +10,6 @@ const mux = new Mux({
 export const signMuxToken = async (req, res) => {
     try {
         const { playbackId } = req.body;
-
         if (!playbackId) {
             return res.status(400).json({ message: "Thiếu Playback ID" });
         }

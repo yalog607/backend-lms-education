@@ -5,8 +5,12 @@ const mux = new Mux({ webhookSecret: process.env.MUX_WEBHOOK_SECRET });
 
 export const handleMuxWebhook = async (req, res) => {
     try {
+        console.log("mux-signature:", req.headers["mux-signature"]);
+        console.log("raw body:", req.body.toString("utf8"));
+        console.log("webhook secret:", process.env.MUX_WEBHOOK_SECRET);
+
         // Lấy rawBody dạng string
-        const rawBody = req.rawBody ? req.rawBody.toString('utf8') : '';
+        const rawBody = req.rawBody?.toString("utf8") || "";
         let event;
         try {
             mux.webhooks.verifySignature(rawBody, req.headers, process.env.MUX_WEBHOOK_SECRET);

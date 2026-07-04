@@ -10,6 +10,10 @@ import webhookRoute from './routes/webhook.route.js';
 const app = express()
 const port = process.env.PORT || 5001
 
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+
 app.use(
   '/api/webhook/mux',
   express.raw({ type: 'application/json' }),
@@ -24,9 +28,9 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: allowedOrigins,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }))
 app.use(cookieParser());
@@ -35,8 +39,15 @@ app.use(rateLimiter);
 // Configure routes
 route(app)
 
-//  Connect to database and start the server
+//  Connect to database
 connectDB()
-app.listen(port, () => {
-  console.log(`App is running on port ${port}`)
-})
+
+// Vercel invokes this module as a serverless function and calls the exported
+// app directly, so only bind a port when running locally (e.g. `npm start`).
+if (process.env.VERCEL !== '1') {
+  app.listen(port, () => {
+    console.log(`App is running on port ${port}`)
+  })
+}
+
+export default app

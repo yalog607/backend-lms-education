@@ -39,15 +39,8 @@ app.use(rateLimiter);
 // Configure routes
 route(app)
 
-//  Connect to database
+//  Connect to database and start the server
 connectDB()
-
-// Vercel invokes this module as a serverless function and calls the exported
-// app directly, so only bind a port when running locally (e.g. `npm start`).
-if (process.env.VERCEL !== '1') {
-  app.listen(port, () => {
-    console.log(`App is running on port ${port}`)
-  })
-}
-
-export default app
+app.listen(port, () => {
+  console.log(`App is running on port ${port}`)
+})
